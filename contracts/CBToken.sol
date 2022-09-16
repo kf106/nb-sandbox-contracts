@@ -70,7 +70,7 @@ contract CBToken is ERC20, AccessControl {
             emit LargeTransfer(from, to, amount);
         }
         // addresses on the banlist cannot transfer assets
-        require( AMLBanList[from] != 0, "You are on the banlist");
+        require( AMLBanList[from] == 0, "You are on the banlist");
         // check if we are into a new transfer day
         if (lastTransfer[from] > block.timestamp + 24 * 60 * 60) {
             // reset our daily allowance
