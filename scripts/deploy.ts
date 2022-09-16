@@ -15,7 +15,7 @@ async function main() {
 
   // We get the contract to deploy
   const CBToken = await ethers.getContractFactory("CBToken");
-  const token = await CBToken.deploy("TestToken", "TST", 4);
+  const token = await CBToken.deploy("Authoritarian Central Bank Digital Currency", "CBDC", 6);
 
   await token.deployed();
 

@@ -7,7 +7,10 @@
     "compile": "hardhat compile",
     "deploy_CBToken": "hardhat run scripts/deploy.ts --network $NETWORK",
     "deploy_disperse": "hardhat run scripts/disperse.ts --network $NETWORK",
-    "test": "hardhat test"
+    "test": "hardhat test",
+    "lint:js": "eslint --ignore-path .gitignore ./test ./scripts",
+    "lint:js:fix": "eslint --ignore-path .gitignore ./test ./scripts --fix",
+    "lint:sol": "solhint 'contracts/**/*.sol'"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
