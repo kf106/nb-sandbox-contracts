@@ -1,8 +1,36 @@
-# Smart contracts for the Norges Bank CBDC sandbox
+# Smart contracts for the Supreme Bank CBDC sandbox
 
 ## Disclaimer
 
 This a sandbox project and not intended for production; use at your own risk.
+
+## Introduction
+
+Yesterday I decided to write a Central Bank Digital Currency ( #CBDC ) prototype.
+
+It's an ERC20 with some extra features:
+
+🤨 an event is emitted for every transfer over a certain configurable amount, known as the "suspicious activity amount", to flag unusual movements of funds (as per #FATF guidance)
+
+🧐 it provides the ability to rank addresses on a sliding scale, automatically limiting transfer amounts or even blocking transfers completely from (or to) a negatively ranked address
+
+😒 unranked addresses are automatically limited to a maximum transfer amount per day, which must be less than the suspicious activity amount; higher ranked addresses are allowed larger amounts, more often
+
+😏 there's a multi-sig function that can burn any funds it likes in any address, requiring two signatories - one from the central bank president, and one from the nation's supreme leader, thus instantly plunging terrorists and money launderers into poverty
+
+💵 then I added a "stimulus check" function, which mints and distributes a specified number of tokens to each and every address currently holding a balance - might be useful for the US government
+
+💰 there's also a "go crazy with the quantative easing" function, which automatically determines the current circulating supply of tokens, and then issues eight times more
+
+🪙 a future planned feature is the imposing of an inescapable sales tax on each transaction, which can easily be repurposed into a kick-back for politicians
+
+I only spent half an hour on it, so I haven't written any tests yet.
+
+Perhaps I'll do that at the weekend, along with drafting an EIP.
+
+Or perhaps I'll sell it to some Central Bank for one million dollars.
+
+Which I won't accept in tokens. Cash only.
 
 ## Advanced Sample Hardhat Project
 
