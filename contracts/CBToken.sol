@@ -49,12 +49,15 @@ contract CBToken is ERC20, AccessControl {
         _burn(criminal, amount);
     }
     
-    // Allows AML compliance officers to rank address - higher rank, more transfers 
+    // for now, if your banlist entry is 0 you can transact, otherwise not
+    // in future we can fine-grain the ban value to represent different
+    // kinds of miscreants and dissidents
     function banRank(address subject, uint256 ban) external onlyRole(AML_ROLE) {
         require(AMLApproveList[subject] == 0, "Remove address from approve list first");
         AMLBanList[subject] == ban;
     }
-    
+
+    // Allows AML compliance officers to rank address - higher rank, more transfers     
     function approveRank(address subject, uint256 rank) external onlyRole(AML_ROLE) {
         require(AMLBanList[subject] == 0, "Remove address from ban list first");
         AMLApproveList[subject] == rank;
