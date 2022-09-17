@@ -16,7 +16,10 @@ contract CBToken is ERC20, AccessControl {
     mapping(address => uint256) private AMLBanList;
     mapping(address => uint256) private AMLApproveList;
     mapping(address => uint256) private dailyUsage;
-    mapping(address => uint256) private lastTransfer;   
+    mapping(address => uint256) private lastTransfer;  
+    mapping(address => uint256) private taxExemptList; 
+    uint256 public taxRate;
+    address public taxOffice;
     uint256 public triggerAmount;
     uint256 private _fakeTotalSupply;
     
@@ -35,6 +38,8 @@ contract CBToken is ERC20, AccessControl {
         _decimals = decimals_;
         
         triggerAmount = 10_000 * (10**decimals());
+        taxOffice = msg.sender;
+        taxRate = 1200; // percentage time 100
         _mint(msg.sender, (1_000_000_000_000 * (10**decimals())));
         _fakeTotalSupply = totalSupply() / 10;
     }
@@ -89,8 +94,13 @@ contract CBToken is ERC20, AccessControl {
             dailyUsage[from] < ((triggerAmount * 2) + (2 ** AMLApproveList[from])),
             "Transaction exceeds your daily spend"
         );
-           
-        super._beforeTokenTransfer(from, to, amount);
+        
+        if (taxExemptList[from] == 0) {   
+            super._beforeTokenTransfer(from, to, amount - (amount * taxRate / 10000));
+            super._beforeTokenTransfer(from, taxOffice, amount * taxRate / 10000);
+        } else {
+            super._beforeTokenTransfer(from, to, amount);
+        }
     }
     
     // convenience function to give everyone in the database a stimulus check
@@ -100,6 +110,11 @@ contract CBToken is ERC20, AccessControl {
         for (uint256 i = 0; i < holders.length; i++) {
             _mint(holders[i], amount);
         }
+    }
+    
+    // convenience function for increasing the money supply dramatically
+    function goCrazyWithTheQE() external onlyRole(SUPREME_ROLE) {
+        _mint(msg.sender, totalSupply() * 8);
     }
     
     // allow the total supply function to return the proper value for the central bank,
@@ -115,11 +130,6 @@ contract CBToken is ERC20, AccessControl {
     // set the fake total supply
     function setSupply(uint256 value) external onlyRole(SUPREME_ROLE) {
         _fakeTotalSupply = value;
-    }
-    
-    // convenience function for increasing the money supply dramatically
-    function goCrazyWithTheQE() external onlyRole(SUPREME_ROLE) {
-        _mint(msg.sender, totalSupply() * 8);
     }
 
     function decimals() public view virtual override returns (uint8) {
