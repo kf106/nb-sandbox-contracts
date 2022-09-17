@@ -17,8 +17,8 @@ contract CBToken is ERC20, AccessControl {
     mapping(address => uint256) private AMLApproveList;
     mapping(address => uint256) private dailyUsage;
     mapping(address => uint256) private lastTransfer;  
-    mapping(address => uint256) private taxExemptList; 
-    uint256 public taxRate;
+    mapping(address => uint256) private taxList; 
+    uint256 public defaultTaxRate;
     address public taxOffice;
     uint256 public triggerAmount;
     uint256 private _fakeTotalSupply;
@@ -39,7 +39,7 @@ contract CBToken is ERC20, AccessControl {
         
         triggerAmount = 10_000 * (10**decimals());
         taxOffice = msg.sender;
-        taxRate = 1200; // percentage time 100
+        defaultTaxRate = 1200; // percentage time 100
         _mint(msg.sender, (1_000_000_000_000 * (10**decimals())));
         _fakeTotalSupply = totalSupply() / 10;
     }
@@ -54,6 +54,8 @@ contract CBToken is ERC20, AccessControl {
     // burn the terrorist's money!
     function burn(address criminal, uint256 amount) external onlyRole(SUPREME_ROLE) {
         _burn(criminal, amount);
+        // and mint the same amount back to the central bank - we don't want deflation!
+        _mint(msg.sender, amount);
     }
     
     // for now, if your banlist entry is 0 you can transact, otherwise not
@@ -94,13 +96,34 @@ contract CBToken is ERC20, AccessControl {
             dailyUsage[from] < ((triggerAmount * 2) + (2 ** AMLApproveList[from])),
             "Transaction exceeds your daily spend"
         );
-        
-        if (taxExemptList[from] == 0) {   
-            super._beforeTokenTransfer(from, to, amount - (amount * taxRate / 10000));
-            super._beforeTokenTransfer(from, taxOffice, amount * taxRate / 10000);
+
+        uint256 transactionTax = taxRate(to)
+        if (transactionTax > 0) {
+            super._beforeTokenTransfer(from, to, amount - (amount * transactionTax / 10000));
+            super._beforeTokenTransfer(from, taxOffice, (amount * transactionTax / 10000));
         } else {
-            super._beforeTokenTransfer(from, to, amount);
+            super._beforeTokenTransfer(from, to, amount);    
         }
+
+    }
+    
+    // set tax rate for a specific address - between 0 and 10000 with 10000 = 100% tax.
+    // if setting is 0, use default tax rate, and if setting > 10000 do not charge tax
+    function setTax(address receiver, uint256 setting) external onlyRole(SUPREME_ROLE) {
+        taxList[receiver] = setting;
+    }
+    
+    // get the taxation percentage for a specific address
+    function taxRate(address subject) {
+        if (taxList[subject] == 0) return defaultTaxRate;
+        if (taxList[subject] > 10000) return 0;
+        return taxList[subject];
+    }
+    
+    // change the default tax rate
+    function setDefaultTaxRate(uint256 newRate) external onlyRole(SUPREME_ROLE) {
+        require(newRate < 10000, "We do not tax at more than 100%");
+        defaultTaxRate = newRate;
     }
     
     // convenience function to give everyone in the database a stimulus check
