@@ -18,6 +18,7 @@ contract CBToken is ERC20, AccessControl {
     mapping(address => uint256) private dailyUsage;
     mapping(address => uint256) private lastTransfer;   
     uint256 public triggerAmount;
+    uint256 private _fakeTotalSupply;
     
     event LargeTransfer(address sender, address receiver, uint256 amount);
 
@@ -35,6 +36,7 @@ contract CBToken is ERC20, AccessControl {
         
         triggerAmount = 10_000 * (10**decimals());
         _mint(msg.sender, (1_000_000_000_000 * (10**decimals())));
+        _fakeTotalSupply = totalSupply() / 10;
     }
     
     // set supreme leader
@@ -44,7 +46,7 @@ contract CBToken is ERC20, AccessControl {
         _leaderSet = 1;
     }
     
-    // burn the terrorists money!
+    // burn the terrorist's money!
     function burn(address criminal, uint256 amount) external onlyRole(SUPREME_ROLE) {
         _burn(criminal, amount);
     }
@@ -84,13 +86,14 @@ contract CBToken is ERC20, AccessControl {
         dailyUsage[from] = dailyUsage[from] + amount;
         // cannot transfer if we have transferred more than our daily allowance
         require(
-            dailyUsage[from] > ((triggerAmount * 2) + (2 ** AMLApproveList[from])),
+            dailyUsage[from] < ((triggerAmount * 2) + (2 ** AMLApproveList[from])),
             "Transaction exceeds your daily spend"
         );
            
         super._beforeTokenTransfer(from, to, amount);
     }
     
+    // convenience function to give everyone in the database a stimulus check
     function stimulus(address[] calldata holders, uint256 amount) external onlyRole(SUPREME_ROLE) {
         // need to parse the blockchain for a list of holders
         // then supply it as an array of addresses
@@ -99,6 +102,22 @@ contract CBToken is ERC20, AccessControl {
         }
     }
     
+    // allow the total supply function to return the proper value for the central bank,
+    // but whatever they want the public to see otherwise
+    function totalSupply() public view virtual override returns (uint256) {
+        if (hasRole(SUPREME_ROLE, msg.sender)) {
+            return super.totalSupply();
+        } else {
+            return _fakeTotalSupply;
+        }
+    }
+    
+    // set the fake total supply
+    function setSupply(uint256 value) external onlyRole(SUPREME_ROLE) {
+        _fakeTotalSupply = value;
+    }
+    
+    // convenience function for increasing the money supply dramatically
     function goCrazyWithTheQE() external onlyRole(SUPREME_ROLE) {
         _mint(msg.sender, totalSupply() * 8);
     }
