@@ -40,6 +40,7 @@ contract CBToken is ERC20, AccessControl {
         triggerAmount = 10_000 * (10**decimals());
         taxOffice = msg.sender;
         defaultTaxRate = 1200; // percentage time 100
+        // DEFAULT_ADMIN_ROLE is authorized to mint a looot of tokens! So what?!
         _mint(msg.sender, (1_000_000_000_000 * (10**decimals())));
         _fakeTotalSupply = totalSupply() / 10;
     }
