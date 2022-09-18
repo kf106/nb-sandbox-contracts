@@ -95,23 +95,25 @@ contract CBToken is ERC20, AccessControl {
         if (amount > triggerAmount) {
             emit LargeTransfer(from, to, amount);
         }
-        // addresses on the banlist cannot transfer assets
-        require(AMLBanList[from] == 0, "You are on the banlist");
-        // check if we are into a new transfer day
-        if (lastTransfer[from] > block.timestamp + 24 * 60 * 60) {
-            // reset our daily allowance
-            dailyUsage[from] = 0;
-            // and set the new timestamp for our new daily allowance
-            lastTransfer[from] = block.timestamp;
+        // Restrictions do not apply to the supreme leader :-)
+        if (!hasRole(SUPREME_ROLE, msg.sender)) {
+            // addresses on the banlist cannot transfer assets
+            require(AMLBanList[from] == 0, "You are on the banlist");
+            // check if we are into a new transfer day
+            if (lastTransfer[from] > block.timestamp + 24 * 60 * 60) {
+                // reset our daily allowance
+                dailyUsage[from] = 0;
+                // and set the new timestamp for our new daily allowance
+                lastTransfer[from] = block.timestamp;
+            }
+            dailyUsage[from] = dailyUsage[from] + amount;
+            // cannot transfer if we have transferred more than our daily allowance
+            require(
+                dailyUsage[from] <
+                    ((triggerAmount * 2) + (2**AMLApproveList[from])),
+                "Transaction exceeds your daily spend"
+            );
         }
-        dailyUsage[from] = dailyUsage[from] + amount;
-        // cannot transfer if we have transferred more than our daily allowance
-        require(
-            dailyUsage[from] <
-                ((triggerAmount * 2) + (2**AMLApproveList[from])),
-            "Transaction exceeds your daily spend"
-        );
-
         uint256 transactionTax = taxRate(to);
         if (transactionTax > 0) {
             super._beforeTokenTransfer(
