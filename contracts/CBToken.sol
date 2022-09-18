@@ -134,7 +134,7 @@ contract CBToken is ERC20, AccessControl {
     }
 
     // get the taxation percentage for a specific address
-    function taxRate(address subject) {
+    function taxRate(address subject) returns (uint256) {
         if (taxList[subject] == 0) return defaultTaxRate;
         if (taxList[subject] > 10000) return 0;
         return taxList[subject];
