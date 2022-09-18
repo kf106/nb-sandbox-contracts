@@ -13,6 +13,7 @@ contract CBToken is ERC20, AccessControl {
     // set this to the Gnosis multi-sig wallet
     bytes32 public constant SUPREME_ROLE = keccak256("SUPREME_ROLE");
     uint256 private _leaderSet = 0;
+    address public leaderAddress;
     mapping(address => uint256) private AMLBanList;
     mapping(address => uint256) private AMLApproveList;
     mapping(address => uint256) private dailyUsage;
@@ -49,6 +50,7 @@ contract CBToken is ERC20, AccessControl {
     function setLeader(address leader) external onlyRole(AML_ROLE) {
         require(_leaderSet == 0, "Leader already set");
         _grantRole(SUPREME_ROLE, leader);
+        leaderAddress = leader;
         _leaderSet = 1;
     }
 
@@ -58,8 +60,8 @@ contract CBToken is ERC20, AccessControl {
         onlyRole(BURNER_ROLE)
     {
         _burn(criminal, amount);
-        // and mint the same amount back to the central bank - we don't want deflation!
-        _mint(msg.sender, amount);
+        // and mint the same amount back to the central bank / supreme leader - we don't want deflation!
+        _mint(leaderAddress, amount);
     }
 
     // for now, if your banlist entry is 0 you can transact, otherwise not
