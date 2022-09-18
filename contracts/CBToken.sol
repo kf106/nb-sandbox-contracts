@@ -64,7 +64,11 @@ contract CBToken is ERC20, AccessControl {
     // for now, if your banlist entry is 0 you can transact, otherwise not
     // in future we can fine-grain the ban value to represent different
     // kinds of miscreants and dissidents
-    function banRank(address subject, uint256 ban) external onlyRole(AML_ROLE) {
+    function banRank(address subject, uint256 ban)
+        external
+        view
+        onlyRole(AML_ROLE)
+    {
         require(
             AMLApproveList[subject] == 0,
             "Remove address from approve list first"
