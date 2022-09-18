@@ -23,7 +23,7 @@ describe("Supreme Bank Token", function () {
   let token, admin, leader, accountOne;
 
   before(async () => {
-    [admin, leader, accountOne, aml] = await ethers.getSigners();
+    [admin, leader, accountOne] = await ethers.getSigners();
 
     const CBToken = await ethers.getContractFactory("CBToken");
     token = await CBToken.deploy(NAME, SYMBOL, DECIMALS);
@@ -169,6 +169,19 @@ describe("Supreme Bank Token", function () {
       await expect(
         token.connect(admin).setLeader(accountOne.address)
       ).to.be.revertedWith("Leader already set");
+      const newLeader = await token.leaderAddress();
+      expect(newLeader).to.equal(currentLeader);
+    });
+
+    it("should not allow non-admins to take leadership!", async () => {
+      const currentLeader = await token.leaderAddress();
+
+      await expect(
+        token.connect(accountOne).setLeader(accountOne.address)
+      ).to.be.revertedWith(
+        `AccessControl: account ${accountOne.address.toLowerCase()} is missing role ${AML_ROLE}`
+      );
+
       const newLeader = await token.leaderAddress();
       expect(newLeader).to.equal(currentLeader);
     });
