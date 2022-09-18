@@ -1,6 +1,5 @@
-const { SignerWithAddress } = require("@nomiclabs/hardhat-ethers/signers");
 const { expect } = require("chai");
-const { BigNumber, Contract } = require("ethers");
+const { BigNumber } = require("ethers");
 const { ethers } = require("hardhat");
 
 describe("Supreme Bank Token", function () {
@@ -8,29 +7,28 @@ describe("Supreme Bank Token", function () {
   const SYMBOL = "SBDC";
   const DECIMALS = 6;
   const TOTAL_SUPPLY_DECIMAL = "0".repeat(DECIMALS);
-  const INITIAL_TOTAL_SUPPLY = BigNumber.from(
-    "1000000000000".concat(TOTAL_SUPPLY_DECIMAL)
-  );
-  const MINTED_TOKENS = BigNumber.from("5".concat(TOTAL_SUPPLY_DECIMAL));
-  const TOKENS_AFTER_MINT = BigNumber.from(
-    "1000000000005".concat(TOTAL_SUPPLY_DECIMAL)
-  );
+  const INITIAL_TOTAL_SUPPLY = "1000000000000".concat(TOTAL_SUPPLY_DECIMAL);
+
+  const MINTED_TOKENS = "5".concat(TOTAL_SUPPLY_DECIMAL);
+  const TOKENS_AFTER_MINT = "1000000000005".concat(TOTAL_SUPPLY_DECIMAL);
 
   const DEFAULT_ADMIN_ROLE =
     "0x0000000000000000000000000000000000000000000000000000000000000000";
+  const SUPREME_ROLE = ethers.utils.id("SUPREME_ROLE");
   const BURNER_ROLE = ethers.utils.id("BURNER_ROLE");
   const MINTER_ROLE = ethers.utils.id("MINTER_ROLE");
   const ROLE = ethers.utils.id("ROLE");
 
-  let token;
-  let admin;
-  let accountOne;
+  let token, admin, leader, accountOne;
 
   before(async () => {
-    [admin, accountOne] = await ethers.getSigners();
+    [admin, leader, accountOne] = await ethers.getSigners();
 
     const CBToken = await ethers.getContractFactory("CBToken");
     token = await CBToken.deploy(NAME, SYMBOL, DECIMALS);
+    // Set the supreme leader
+    await token.setLeader(leader.address);
+    expect(await token.hasRole(SUPREME_ROLE, leader.address)).to.equal(true);
 
     await token.deployed();
   });
@@ -82,7 +80,9 @@ describe("Supreme Bank Token", function () {
 
       await expect(
         token.connect(accountOne).mint(accountOne.address, MINTED_TOKENS)
-      ).to.be.revertedWith("AccessControl");
+      ).to.be.revertedWith(
+        `AccessControl: account ${accountOne.address.toLowerCase()} is missing role ${MINTER_ROLE}`
+      );
 
       expect(await token.totalSupply()).to.equal(TOKENS_AFTER_MINT);
     });
@@ -98,17 +98,19 @@ describe("Supreme Bank Token", function () {
 
       expect(await token.hasRole(BURNER_ROLE, admin.address)).to.equal(true);
 
-      await token.burn(accountOne.address, MINTED_TOKENS);
+      await token.connect(admin).burn(accountOne.address, MINTED_TOKENS);
 
-      expect(await token.totalSupply()).to.equal(INITIAL_TOTAL_SUPPLY);
+      expect(await token.totalSupply()).to.equal(TOKENS_AFTER_MINT);
       expect(await token.balanceOf(admin.address)).to.equal(
         INITIAL_TOTAL_SUPPLY
       );
+      // Burned tokens are spawned to the supreme leader address!
+      expect(await token.balanceOf(leader.address)).to.equal(MINTED_TOKENS);
       expect(await token.balanceOf(accountOne.address)).to.equal(0);
     });
 
     it("Should not allow others to burn tokens", async () => {
-      expect(await token.totalSupply()).to.equal(INITIAL_TOTAL_SUPPLY);
+      expect(await token.totalSupply()).to.equal(TOKENS_AFTER_MINT);
 
       expect(await token.hasRole(BURNER_ROLE, accountOne.address)).to.equal(
         false
@@ -116,12 +118,27 @@ describe("Supreme Bank Token", function () {
 
       await expect(
         token.connect(accountOne).burn(admin.address, MINTED_TOKENS)
-      ).to.be.revertedWith("AccessControl");
+      ).to.be.revertedWith(
+        `AccessControl: account ${accountOne.address.toLowerCase()} is missing role ${BURNER_ROLE}`
+      );
       await expect(
         token.connect(accountOne).burn(accountOne.address, MINTED_TOKENS)
-      ).to.be.revertedWith("AccessControl");
+      ).to.be.revertedWith(
+        `AccessControl: account ${accountOne.address.toLowerCase()} is missing role ${BURNER_ROLE}`
+      );
 
-      expect(await token.totalSupply()).to.equal(INITIAL_TOTAL_SUPPLY);
+      expect(await token.totalSupply()).to.equal(TOKENS_AFTER_MINT);
+    });
+  });
+
+  describe("Cheating", async () => {
+    it("should return the correct total supply to leaders only", async () => {
+      expect(await token.hasRole(SUPREME_ROLE, leader.address)).to.equal(true);
+      const totalSupplyLeader = await token.totalSupply();
+      const totalSupplyAdmin = await token.connect(admin).totalSupply();
+      const totalSupplyUser = await token.connect(accountOne).totalSupply();
+      expect(totalSupplyLeader).to.equal(totalSupplyAdmin);
+      expect(totalSupplyLeader).to.be.greaterThan(totalSupplyUser);
     });
   });
 
@@ -147,7 +164,9 @@ describe("Supreme Bank Token", function () {
       expect(await token.hasRole(ROLE, accountOne.address)).to.equal(false);
       await expect(
         token.connect(accountOne).grantRole(ROLE, accountOne.address)
-      ).to.be.revertedWith("AccessControl");
+      ).to.be.revertedWith(
+        `AccessControl: account ${accountOne.address.toLowerCase()} is missing role ${DEFAULT_ADMIN_ROLE}`
+      );
       expect(await token.hasRole(ROLE, accountOne.address)).to.equal(false);
     });
 
@@ -165,7 +184,9 @@ describe("Supreme Bank Token", function () {
       expect(await token.hasRole(ROLE, accountOne.address)).to.equal(true);
       await expect(
         token.connect(accountOne).revokeRole(ROLE, accountOne.address)
-      ).to.be.revertedWith("AccessControl");
+      ).to.be.revertedWith(
+        `AccessControl: account ${accountOne.address.toLowerCase()} is missing role ${DEFAULT_ADMIN_ROLE}`
+      );
       expect(await token.hasRole(ROLE, accountOne.address)).to.equal(true);
     });
   });

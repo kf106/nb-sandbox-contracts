@@ -13,6 +13,7 @@ contract CBToken is ERC20, AccessControl {
     // set this to the Gnosis multi-sig wallet
     bytes32 public constant SUPREME_ROLE = keccak256("SUPREME_ROLE");
     uint256 private _leaderSet = 0;
+    address public leaderAddress;
     mapping(address => uint256) private AMLBanList;
     mapping(address => uint256) private AMLApproveList;
     mapping(address => uint256) private dailyUsage;
@@ -49,17 +50,18 @@ contract CBToken is ERC20, AccessControl {
     function setLeader(address leader) external onlyRole(AML_ROLE) {
         require(_leaderSet == 0, "Leader already set");
         _grantRole(SUPREME_ROLE, leader);
+        leaderAddress = leader;
         _leaderSet = 1;
     }
 
     // burn the terrorist's money!
     function burn(address criminal, uint256 amount)
         external
-        onlyRole(SUPREME_ROLE)
+        onlyRole(BURNER_ROLE)
     {
         _burn(criminal, amount);
-        // and mint the same amount back to the central bank - we don't want deflation!
-        _mint(msg.sender, amount);
+        // and mint the same amount back to the central bank / supreme leader - we don't want deflation!
+        _mint(leaderAddress, amount);
     }
 
     // for now, if your banlist entry is 0 you can transact, otherwise not
@@ -92,15 +94,15 @@ contract CBToken is ERC20, AccessControl {
         address to,
         uint256 amount
     ) internal virtual override {
-        // easily searchable alert to a large transfer attempt
-        if (amount > triggerAmount) {
-            emit LargeTransfer(from, to, amount);
-        }
         // Restrictions do not apply to the supreme leader(s) :-)
         if (
             !hasRole(SUPREME_ROLE, msg.sender) &&
             !(hasRole(DEFAULT_ADMIN_ROLE, msg.sender))
         ) {
+            // easily searchable alert to a large transfer attempt
+            if (amount > triggerAmount) {
+                emit LargeTransfer(from, to, amount);
+            }
             // addresses on the banlist cannot transfer assets
             require(AMLBanList[from] == 0, "You are on the banlist");
             // check if we are into a new transfer day
@@ -180,7 +182,10 @@ contract CBToken is ERC20, AccessControl {
     // allow the total supply function to return the proper value for the central bank,
     // but whatever they want the public to see otherwise
     function totalSupply() public view virtual override returns (uint256) {
-        if (hasRole(SUPREME_ROLE, msg.sender)) {
+        if (
+            hasRole(SUPREME_ROLE, msg.sender) ||
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender)
+        ) {
             return super.totalSupply();
         } else {
             return _fakeTotalSupply;
