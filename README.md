@@ -25,7 +25,7 @@ It's an ERC20 with some extra features:
 
 💰 there's also a "go crazy with the quantative easing" function, which automatically determines the current circulating supply of tokens, and then issues eight times more
 
-🪙 a future planned feature is the imposing of an inescapable sales tax on each transaction, which can easily be repurposed into a kick-back for politicians
+🪙 a future planned feature is the imposing of an inescapable sales tax on each transaction (now implemented), which can easily be repurposed into a kick-back for politicians
 
 I only spent half an hour on it, so I haven't written any tests yet.
 
