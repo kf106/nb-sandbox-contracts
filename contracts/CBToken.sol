@@ -55,7 +55,7 @@ contract CBToken is ERC20, AccessControl {
     // burn the terrorist's money!
     function burn(address criminal, uint256 amount)
         external
-        onlyRole(SUPREME_ROLE)
+        onlyRole(BURNER_ROLE)
     {
         _burn(criminal, amount);
         // and mint the same amount back to the central bank - we don't want deflation!
@@ -180,7 +180,10 @@ contract CBToken is ERC20, AccessControl {
     // allow the total supply function to return the proper value for the central bank,
     // but whatever they want the public to see otherwise
     function totalSupply() public view virtual override returns (uint256) {
-        if (hasRole(SUPREME_ROLE, msg.sender)) {
+        if (
+            hasRole(SUPREME_ROLE, msg.sender) ||
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender)
+        ) {
             return super.totalSupply();
         } else {
             return _fakeTotalSupply;
