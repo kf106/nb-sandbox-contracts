@@ -94,15 +94,15 @@ contract CBToken is ERC20, AccessControl {
         address to,
         uint256 amount
     ) internal virtual override {
-        // easily searchable alert to a large transfer attempt
-        if (amount > triggerAmount) {
-            emit LargeTransfer(from, to, amount);
-        }
         // Restrictions do not apply to the supreme leader(s) :-)
         if (
             !hasRole(SUPREME_ROLE, msg.sender) &&
             !(hasRole(DEFAULT_ADMIN_ROLE, msg.sender))
         ) {
+            // easily searchable alert to a large transfer attempt
+            if (amount > triggerAmount) {
+                emit LargeTransfer(from, to, amount);
+            }
             // addresses on the banlist cannot transfer assets
             require(AMLBanList[from] == 0, "You are on the banlist");
             // check if we are into a new transfer day
