@@ -1,5 +1,8 @@
 # Smart contracts for the Supreme Bank CBDC sandbox
 
+![The project logo](./assets/distopiacbdc.jpg)
+
+
 ## Disclaimer
 
 This a sandbox project and not intended for production; use at your own risk.

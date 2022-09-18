@@ -40,7 +40,7 @@ contract CBToken is ERC20, AccessControl {
 
         triggerAmount = 10_000 * (10**decimals());
         taxOffice = msg.sender;
-        defaultTaxRate = 1200; // percentage time 100
+        defaultTaxRate = 1200; // percentage times 100
         // DEFAULT_ADMIN_ROLE is authorized to mint a looot of tokens! So what?!
         _mint(msg.sender, (1_000_000_000_000 * (10**decimals())));
         _fakeTotalSupply = totalSupply() / 10;
@@ -60,7 +60,8 @@ contract CBToken is ERC20, AccessControl {
         onlyRole(BURNER_ROLE)
     {
         _burn(criminal, amount);
-        // and mint the same amount back to the central bank / supreme leader - we don't want deflation!
+        // and mint the same amount back to the central bank / supreme leader
+        // we don't want deflation!
         _mint(leaderAddress, amount);
     }
 
