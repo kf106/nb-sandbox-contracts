@@ -79,6 +79,7 @@ contract CBToken is ERC20, AccessControl {
     // Allows AML compliance officers to rank address - higher rank, more transfers
     function approveRank(address subject, uint256 rank)
         external
+        view
         onlyRole(AML_ROLE)
     {
         require(AMLBanList[subject] == 0, "Remove address from ban list first");
