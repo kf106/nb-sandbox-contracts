@@ -161,7 +161,7 @@ describe("Supreme Bank Token", function () {
       expect(await token.hasRole(ROLE, accountOne.address)).to.equal(true);
     });
 
-    it("should not allow admins to take leadership!", async () => {
+    it("should not allow admins to update leader!", async () => {
       expect(await token.hasRole(AML_ROLE, admin.address)).to.equal(true);
 
       const currentLeader = await token.leaderAddress();
@@ -173,7 +173,7 @@ describe("Supreme Bank Token", function () {
       expect(newLeader).to.equal(currentLeader);
     });
 
-    it("should not allow non-admins to take leadership!", async () => {
+    it("should not allow non-admins to update leader!", async () => {
       const currentLeader = await token.leaderAddress();
 
       await expect(
