@@ -131,6 +131,17 @@ describe("Supreme Bank Token", function () {
     });
   });
 
+  describe("Cheating", async () => {
+    it("should return the correct total supply to leaders only", async () => {
+      expect(await token.hasRole(SUPREME_ROLE, leader.address)).to.equal(true);
+      const totalSupplyLeader = await token.totalSupply();
+      const totalSupplyAdmin = await token.connect(admin).totalSupply();
+      const totalSupplyUser = await token.connect(accountOne).totalSupply();
+      expect(totalSupplyLeader).to.equal(totalSupplyAdmin);
+      expect(totalSupplyLeader).to.be.greaterThan(totalSupplyUser);
+    });
+  });
+
   describe("RBAC", async () => {
     afterEach(async () => {
       await token.connect(admin).revokeRole(ROLE, admin.address);
