@@ -17,6 +17,7 @@ describe("Supreme Bank Token", function () {
   const SUPREME_ROLE = ethers.utils.id("SUPREME_ROLE");
   const BURNER_ROLE = ethers.utils.id("BURNER_ROLE");
   const MINTER_ROLE = ethers.utils.id("MINTER_ROLE");
+  const AML_ROLE = ethers.utils.id("AML_ROLE");
   const ROLE = ethers.utils.id("ROLE");
 
   let token, admin, leader, accountOne;
@@ -158,6 +159,31 @@ describe("Supreme Bank Token", function () {
       expect(await token.hasRole(ROLE, accountOne.address)).to.equal(false);
       await token.connect(admin).grantRole(ROLE, accountOne.address);
       expect(await token.hasRole(ROLE, accountOne.address)).to.equal(true);
+    });
+
+    it("should not allow admins to update leader!", async () => {
+      expect(await token.hasRole(AML_ROLE, admin.address)).to.equal(true);
+
+      const currentLeader = await token.leaderAddress();
+
+      await expect(
+        token.connect(admin).setLeader(accountOne.address)
+      ).to.be.revertedWith("Leader already set");
+      const newLeader = await token.leaderAddress();
+      expect(newLeader).to.equal(currentLeader);
+    });
+
+    it("should not allow non-admins to update leader!", async () => {
+      const currentLeader = await token.leaderAddress();
+
+      await expect(
+        token.connect(accountOne).setLeader(accountOne.address)
+      ).to.be.revertedWith(
+        `AccessControl: account ${accountOne.address.toLowerCase()} is missing role ${AML_ROLE}`
+      );
+
+      const newLeader = await token.leaderAddress();
+      expect(newLeader).to.equal(currentLeader);
     });
 
     it("should not allow non-admins to grant roles", async () => {
